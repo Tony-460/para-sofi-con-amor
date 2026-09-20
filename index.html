@@ -779,7 +779,7 @@
         <span class="etiqueta-dato" id="textoConocidos">poné la fecha en que se conocieron</span>
       </div>
       <div class="dato-tarjeta">
-        <span class="emoji-dato">🍾</span>
+        <span class="emoji-dato">🫂</span>
         <span class="numero-dato" id="numeroUltimaVez">--</span>
         <span class="etiqueta-dato" id="textoUltimaVez">poné la fecha de la última vez que se vieron</span>
       </div>
@@ -788,13 +788,21 @@
     <!-- ================= CARTA FINAL ================= -->
     <div class="seccion-carta">
       <h3>💛 Una cartita para vos</h3>
-      <p id="textoCarta">Acá podés escribir un mensaje más largo, contale
-lo que quieras: por qué elegiste mandarle flores,
-qué es lo que más te gusta de ella, o simplemente
-lo mucho que la extrañás este 21.
+      <p id="textoCarta">Vos sabías que yo sabía que algún dia pasaría.
+
+Por esto te pregunté tu modelo y por esto estaba "misterioso"
+La distancia temporal no va a impedir que este detalle te llegue
+
+Viste que yo escribo palabras rapido?
+Cada vez que en la página me sale:
+"Libro", "Leer", "Escribir", "Ojos", "Ella".
+Me acuerdo de vos, casi siempre terminó errando todo, no es tu culpa.
+        
+Ya te extraño, y eso que todavía queda esperar
+Quiero que vuelvas rapido para volverte a abrazar
 
 Escribilo con calma, no hay apuro.</p>
-      <p class="firma">— con cariño, T</p>
+      <p class="firma">— con amor, Tony <3</p>
     </div>
 
     <button class="boton-volver" id="botonVolver">🌼 Volver a ver las flores</button>
@@ -840,9 +848,9 @@ Escribilo con calma, no hay apuro.</p>
   // ---------- Mensajes: personalizá esta lista con lo que quieras decirle ----------
   // Cada flor, al tocarla, muestra uno de estos mensajes (en orden, se repiten si hay más flores que mensajes)
   const mensajes = [
-    "Ojalá estuvieras acá para recibir estas flores de verdad 🌼",
-    "Cuando vuelvas, te tengo un ramo de verdad esperándote",
-    "Estas son amarillas porque me hacen acordar a vos",
+    "Ojalá estuvieras acá para darte estas flores de verdad 🌼",
+    "Cuando vuelvas, tengo a Sharkcy y a un ramo esperándote",
+    "Espero que te guste este detalle",
     "Cuando vuelvas, te tengo un ramo de verdad esperándote",
     "Espero que este día, aunque lejos, te haga sonreír"
   ];
@@ -1062,7 +1070,7 @@ Escribilo con calma, no hay apuro.</p>
     if (horasSinVerse < 24) {
       // Menos de un día: mostramos en horas para que sea más preciso
       numeroUltimaVez.textContent = horasSinVerse;
-      textoUltimaVez.textContent = horasSinVerse === 1 ? 'hora sin vernos' : 'horas desde que nos vimos';
+      textoUltimaVez.textContent = horasSinVerse === 1 ? 'hora sin vernos' : 'horas desde la ultima juntada';
     } else {
       // Un día o más: mostramos en días
       const diasSinVerse = Math.floor(horasSinVerse / 24);
