@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Para vos 🌼</title>
+<style>
+  /* ---------- Variables de color: acá podés cambiar la paleta fácil ---------- */
+  :root {
+    --cielo1: #fff6d9;
+    --cielo2: #ffe9a8;
+    --amarillo: #ffd447;
+    --amarillo-oscuro: #f2a900;
+    --centro-flor: #6b4423;
+    --tallo: #4caf50;
+    --texto: #4a3b1f;
+    --tarjeta-bg: #fffdf5;
+  }
+
+  * { box-sizing: border-box; }
+
+  /* Saca el recuadro azul de foco al tocar/clickear elementos interactivos */
+  button, .flor, .pantalla-sobre, .sobre {
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-x: hidden;
+    font-family: 'Segoe UI', Verdana, sans-serif;
+    background: linear-gradient(180deg, var(--cielo1) 0%, var(--cielo2) 100%);
+    position: relative;
+  }
+  /* El marco de página se posiciona respecto al body (ancho completo),
+     no respecto a .escena (que tiene max-width y queda centrada angosta) */
+  body > .marco-pagina {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; /* se actualiza por JS según el alto real del contenido */
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* ---------- Contenedor principal ---------- */
+  .escena {
+    position: relative;
+    width: 100%;
+    max-width: 700px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 20px;
+    padding-bottom: 40px;
+    /* arranca invisible: se muestra recién cuando se abre el sobre */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s ease;
+  }
+  .escena.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+  /* Mientras la escena no es visible, pausamos las animaciones internas
+     (flores, títulos, etc.) para que arranquen recién al abrir el sobre */
+  .escena:not(.visible) * {
+    animation-play-state: paused !important;
+  }
+
+  /* ---------- Título ---------- */
+  .titulo {
+    text-align: center;
+    color: var(--texto);
+    margin-top: 40px;
+    opacity: 0;
+    animation: aparecer 1.5s ease forwards 0.3s;
+  }
+  .titulo h1 {
+    font-size: clamp(1.6rem, 5vw, 2.6rem);
+    margin: 0;
+    font-weight: 700;
+  }
+  .titulo p {
+    font-size: clamp(0.95rem, 3vw, 1.2rem);
+    margin-top: 8px;
+    opacity: 0.85;
+  }
+
+  @keyframes aparecer {
+    to { opacity: 1; }
+  }
+
+  /* ---------- Sol de fondo ---------- */
+  .sol {
+    position: absolute;
+    top: 8%;
+    right: 12%;
+    width: 90px;
+    height: 90px;
+    background: radial-gradient(circle, #fff4c2, var(--amarillo));
+    border-radius: 50%;
+    box-shadow: 0 0 60px 20px rgba(255, 212, 71, 0.5);
+    animation: brillar 4s ease-in-out infinite;
+    will-change: transform;
+  }
+  @keyframes brillar {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+
+  /* ---------- Campo de flores ---------- */
+  .campo {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 2vw;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .flor {
+    position: relative;
+    width: 70px;
+    height: 180px;
+    cursor: pointer;
+    transform-origin: bottom center;
+    /* nace "achicada" y crece con la animación */
+    animation: crecer 1.2s ease-out forwards, mecer 3.5s ease-in-out infinite;
+    animation-delay: var(--delay), calc(var(--delay) + 1.2s);
+    transform: scale(0);
+    will-change: transform;
+  }
+
+  @keyframes crecer {
+    from { transform: scale(0) translateY(20px); opacity: 0; }
+    to   { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  @keyframes mecer {
+    0%, 100% { rotate: -3deg; }
+    50%      { rotate: 3deg; }
+  }
+
+  .tallo {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 110px;
+    background: linear-gradient(180deg, var(--tallo), #3a8c3f);
+    border-radius: 3px;
+  }
+
+  /* Espinas del tallo, para reforzar que es una rosa */
+  .espina {
+    position: absolute;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    background: #3a8c3f;
+    clip-path: polygon(0 50%, 100% 0, 100% 100%);
+  }
+  .espina.a { bottom: 30px; transform: translateX(-100%); }
+  .espina.b { bottom: 60px; transform: translateX(0%) scaleX(-1); }
+  .espina.c { bottom: 90px; transform: translateX(-100%); }
+
+  .hoja {
+    position: absolute;
+    bottom: 35px;
+    left: 50%;
+    width: 26px;
+    height: 14px;
+    background: var(--tallo);
+    border-radius: 0 100% 0 100%;
+  }
+  .hoja.izq {
+    transform: translateX(-95%) rotate(-15deg);
+  }
+  .hoja.der {
+    transform: translateX(5%) rotate(15deg) scaleX(-1);
+  }
+
+  .flor.tocada .cabeza-flor {
+    transform: translateX(-50%) scale(1.25);
+  }
+
+  /* Pétalos en su estado normal (amarillo, redondeados) ya definidos abajo en .petalo;
+     acá sobreescribimos SOLO cuando la flor tiene la clase .tocada, con transición suave
+     de color y forma para que se vea como si floreciera en rosa roja */
+  .flor.tocada .petalo {
+    background: linear-gradient(180deg, #e63946, #a4161a);
+    border-radius: 60% 5% 60% 5%; /* forma alargada, tipo pétalo de rosa */
+    transition: background 0.8s ease, border-radius 0.8s ease, transform 0.8s ease;
+  }
+  .flor.tocada .centro {
+    background: linear-gradient(180deg, #a4161a, #6b0f13);
+    border-radius: 60% 5% 60% 5%;
+    width: 14px;
+    height: 18px;
+    transform: translate(-50%, -75%) rotate(90deg);
+    transition: background 0.8s ease, width 0.8s ease, height 0.8s ease, transform 0.8s ease;
+  }
+  /* Reacomodamos los pétalos a la disposición "capullo" cuando es rosa */
+  .flor.tocada .petalo {
+    transition: background 0.8s ease, border-radius 0.8s ease, transform 0.8s ease, width 0.8s ease, height 0.8s ease;
+    width: 22px;
+    height: 30px;
+  }
+  .flor.tocada .petalo:nth-child(1) { transform: translate(-50%, -95%) rotate(0deg); }
+  .flor.tocada .petalo:nth-child(2) { transform: translate(-50%, -95%) rotate(60deg); }
+  .flor.tocada .petalo:nth-child(3) { transform: translate(-50%, -95%) rotate(120deg); }
+  .flor.tocada .petalo:nth-child(4) { transform: translate(-50%, -95%) rotate(180deg); }
+  .flor.tocada .petalo:nth-child(5) { transform: translate(-50%, -95%) rotate(240deg); }
+  .flor.tocada .petalo:nth-child(6) { transform: translate(-50%, -95%) rotate(300deg); }
+  .flor.tocada .petalo:nth-child(7) { transform: translate(-50%, -80%) rotate(30deg) scale(0.6); }
+  .flor.tocada .petalo:nth-child(8) { transform: translate(-50%, -80%) rotate(150deg) scale(0.6); }
+
+  .cabeza-flor {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70px;
+    height: 70px;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .flor:hover .cabeza-flor {
+    transform: translateX(-50%) scale(1.15);
+  }
+
+  .petalo {
+    position: absolute;
+    width: 28px;
+    height: 38px;
+    background: linear-gradient(180deg, var(--amarillo), var(--amarillo-oscuro));
+    border-radius: 50% 50% 50% 50%;
+    top: 50%;
+    left: 50%;
+    transform-origin: center bottom;
+  }
+  /* 8 pétalos distribuidos en círculo */
+  .petalo:nth-child(1) { transform: translate(-50%, -100%) rotate(0deg); }
+  .petalo:nth-child(2) { transform: translate(-50%, -100%) rotate(45deg); }
+  .petalo:nth-child(3) { transform: translate(-50%, -100%) rotate(90deg); }
+  .petalo:nth-child(4) { transform: translate(-50%, -100%) rotate(135deg); }
+  .petalo:nth-child(5) { transform: translate(-50%, -100%) rotate(180deg); }
+  .petalo:nth-child(6) { transform: translate(-50%, -100%) rotate(225deg); }
+  .petalo:nth-child(7) { transform: translate(-50%, -100%) rotate(270deg); }
+  .petalo:nth-child(8) { transform: translate(-50%, -100%) rotate(315deg); }
+
+  .centro {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 22px;
+    height: 22px;
+    background: radial-gradient(circle, #8a5a2e, var(--centro-flor));
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: inset -2px -2px 4px rgba(0,0,0,0.3);
+  }
+
+  /* ---------- Contador de flores tocadas ---------- */
+  .contador-flores {
+    color: var(--texto);
+    opacity: 0.75;
+    font-size: 0.9rem;
+    margin-top: 14px;
+    text-align: center;
+  }
+
+  /* ---------- Abejita que se posa en la última flor tocada ---------- */
+  .abeja {
+    position: absolute;
+    font-size: 1.6rem;
+    z-index: 5;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+    transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                top 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                opacity 0.4s ease;
+    pointer-events: none;
+    will-change: transform;
+  }
+  .abeja.visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  /* Vuelo en circulito chico alrededor de la posición donde está posada.
+     Solo se activa cuando la abeja ya está visible, para no interferir
+     con la animación de "volar hacia la flor nueva". El scale(1) se repite
+     en cada paso del keyframe para que el tamaño nunca cambie, solo la posición. */
+  .abeja.visible.deambulando {
+    animation: deambular 3s ease-in-out infinite;
+  }
+  @keyframes deambular {
+    0%   { transform: translate(-50%, -50%) scale(1) translate(0px, 0px); }
+    25%  { transform: translate(-50%, -50%) scale(1) translate(10px, -6px); }
+    50%  { transform: translate(-50%, -50%) scale(1) translate(3px, -12px); }
+    75%  { transform: translate(-50%, -50%) scale(1) translate(-9px, -5px); }
+    100% { transform: translate(-50%, -50%) scale(1) translate(0px, 0px); }
+  }
+
+  .pista {
+    color: var(--texto);
+    opacity: 0.6;
+    font-size: 0.85rem;
+    margin-top: 18px;
+    text-align: center;
+    animation: aparecer 1.5s ease forwards 2s;
+    opacity: 0;
+  }
+
+  /* ---------- Tarjeta / mensaje que se abre ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(74, 59, 31, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    z-index: 10;
+    padding: 20px;
+  }
+  .overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .tarjeta {
+    background: var(--tarjeta-bg);
+    border-radius: 18px;
+    padding: 36px 30px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    transform: scale(0.85) translateY(20px);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .overlay.visible .tarjeta {
+    transform: scale(1) translateY(0);
+  }
+
+  .tarjeta .emoji-grande {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .tarjeta h2 {
+    color: var(--texto);
+    margin: 0 0 14px;
+    font-size: 1.4rem;
+  }
+  .tarjeta p {
+    color: var(--texto);
+    line-height: 1.6;
+    font-size: 1rem;
+    margin: 0;
+  }
+  .cerrar {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    color: var(--texto);
+    cursor: pointer;
+    opacity: 0.5;
+  }
+  .cerrar:hover { opacity: 1; }
+
+  /* ---------- Galería de fotos ---------- */
+  .seccion-foto {
+    width: 100%;
+    max-width: 500px;
+    margin: 30px auto 0;
+    text-align: center;
+    opacity: 0;
+    animation: aparecer 1.5s ease forwards 0.5s;
+  }
+  .galeria {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+  }
+  .marco-foto {
+    background: white;
+    padding: 14px 14px 34px;
+    border-radius: 6px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+    display: inline-block;
+    max-width: 260px;
+  }
+  /* Rotamos cada marco un poco distinto para efecto "polaroids tiradas" */
+  .marco-foto:nth-child(1) { transform: rotate(-3deg); }
+  .marco-foto:nth-child(2) { transform: rotate(2deg); }
+  .marco-foto:nth-child(3) { transform: rotate(-1.5deg); }
+  .marco-foto img {
+    display: block;
+    width: 100%;
+    max-width: 230px;
+    height: auto;
+    border-radius: 2px;
+  }
+  .marco-foto p {
+    margin: 10px 0 0;
+    font-family: 'Segoe UI', cursive;
+    color: var(--texto);
+    font-size: 0.85rem;
+  }
+  /* Si todavía no hay foto, mostramos un cuadro placeholder */
+  .placeholder-foto {
+    width: 100%;
+    max-width: 230px;
+    height: 170px;
+    background: repeating-linear-gradient(45deg, #f2e9c9, #f2e9c9 10px, #e9dcae 10px, #e9dcae 20px);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a08a4a;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 10px;
+  }
+
+  /* ---------- Contador de días para vernos ---------- */
+  .seccion-contador {
+    width: 100%;
+    max-width: 420px;
+    margin: 30px auto 0;
+    text-align: center;
+    color: var(--texto);
+    opacity: 0;
+    animation: aparecer 1.5s ease forwards 0.7s;
+  }
+  .seccion-contador h3 {
+    margin: 0 0 10px;
+    font-size: 1.1rem;
+  }
+  #numeroContador {
+    font-size: 2.6rem;
+    font-weight: 700;
+    color: var(--amarillo-oscuro);
+    display: block;
+  }
+  #textoContador {
+    font-size: 0.95rem;
+    opacity: 0.8;
+  }
+
+  /* ---------- Contadores de tiempo (nos conocimos / última vez) ---------- */
+  .seccion-datos {
+    width: 100%;
+    max-width: 500px;
+    margin: 30px auto 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    opacity: 0;
+    animation: aparecer 1.5s ease forwards 0.8s;
+  }
+  .dato-tarjeta {
+    flex: 1;
+    min-width: 180px;
+    background: var(--tarjeta-bg);
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+    color: var(--texto);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  }
+  .dato-tarjeta .emoji-dato {
+    font-size: 1.6rem;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .dato-tarjeta .numero-dato {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--amarillo-oscuro);
+    display: block;
+  }
+  .dato-tarjeta .etiqueta-dato {
+    font-size: 0.85rem;
+    opacity: 0.8;
+  }
+
+  /* ---------- Carta final ---------- */
+  .seccion-carta {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    margin: 40px auto 0;
+    background: var(--tarjeta-bg);
+    border-radius: 16px;
+    padding: 30px 26px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    color: var(--texto);
+    opacity: 0;
+    animation: aparecer 1.5s ease forwards 0.9s;
+  }
+  .seccion-carta h3 {
+    margin-top: 0;
+    text-align: center;
+    font-size: 1.2rem;
+  }
+  .seccion-carta p {
+    line-height: 1.8;
+    font-size: 1rem;
+    white-space: pre-line; /* respeta los saltos de línea que pongas en el texto */
+  }
+  .seccion-carta .firma {
+    text-align: right;
+    margin-top: 16px;
+    font-style: italic;
+    opacity: 0.8;
+  }
+
+  /* ---------- Botón "volver a las flores" ---------- */
+  .boton-volver {
+    display: block;
+    margin: 34px auto 10px;
+    background: var(--amarillo);
+    color: var(--texto);
+    border: none;
+    padding: 12px 26px;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+  }
+  .boton-volver:hover {
+    transform: translateY(-2px);
+    background: var(--amarillo-oscuro);
+  }
+
+  /* ---------- Control de música ---------- */
+  .control-musica {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--tarjeta-bg);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    z-index: 20;
+  }
+  .control-musica:hover { transform: scale(1.08); }
+
+  /* ---------- Confetti (al activar la música) ---------- */
+  .confetti-pieza {
+    position: fixed;
+    top: -20px;
+    width: 8px;
+    height: 14px;
+    z-index: 25;
+    pointer-events: none;
+    animation-name: caerConfetti;
+    animation-timing-function: ease-in;
+    animation-fill-mode: forwards;
+    will-change: transform;
+  }
+  @keyframes caerConfetti {
+    to {
+      transform: translateY(105vh) rotate(540deg);
+      opacity: 0.9;
+    }
+  }
+
+  /* ---------- Corazón que aparece al tocar (cualquier tap en pantalla) ---------- */
+  .corazon-tap {
+    position: fixed;
+    font-size: 2.5rem;
+    pointer-events: none;
+    z-index: 30;
+    transform: translate(-50%, -50%) scale(1.3);
+    opacity: 1;
+    will-change: transform, opacity;
+    /* transición suave tanto en tamaño como en opacidad */
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s ease-out;
+  }
+  .corazon-tap.achicando {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+  }
+
+  /* ---------- Modo sorpresa: sobre cerrado al inicio ---------- */
+  .pantalla-sobre {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, var(--cielo1) 0%, var(--cielo2) 100%);
+    z-index: 50;
+    cursor: pointer;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+  }
+  .pantalla-sobre.oculto {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .sobre {
+    position: relative;
+    width: 220px;
+    height: 150px;
+    animation: flotar 2.5s ease-in-out infinite;
+  }
+  @keyframes flotar {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* Cuerpo del sobre (rectángulo de base) */
+  .sobre-cuerpo {
+    position: absolute;
+    inset: 0;
+    background: var(--tarjeta-bg);
+    border-radius: 8px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+  }
+
+  /* Las dos solapas inferiores, en "V", simulan el pliegue del sobre */
+  .sobre-cuerpo::before,
+  .sobre-cuerpo::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    background: #f2e9c9;
+    clip-path: polygon(0 0, 100% 0, 50% 60%);
+  }
+  .sobre-cuerpo::before { left: 0; }
+  .sobre-cuerpo::after { right: 0; transform: scaleX(-1); }
+
+  /* Solapa superior triangular, la que "se abre" */
+  .sobre-solapa {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    clip-path: polygon(0 0, 100% 0, 50% 65%);
+    background: linear-gradient(135deg, var(--amarillo), var(--amarillo-oscuro));
+    transform-origin: top center;
+    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 2;
+  }
+  .sobre.abierto .sobre-solapa {
+    transform: rotateX(180deg);
+  }
+
+  .sobre-sello {
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    z-index: 1;
+    transition: opacity 0.3s ease;
+  }
+  .sobre.abierto .sobre-sello {
+    opacity: 0;
+  }
+
+  .texto-sobre {
+    margin-top: 26px;
+    color: var(--texto);
+    font-size: 1rem;
+    text-align: center;
+    opacity: 0.75;
+  }
+
+  /* ---------- Marco de florcitas en los bordes de la página ---------- */
+  .marco-pagina .fila-borde {
+    position: absolute;
+    display: flex;
+    justify-content: space-around;
+  }
+  /* Filas arriba y abajo: horizontales, ancho completo */
+  .marco-pagina .arriba,
+  .marco-pagina .abajo {
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+  .marco-pagina .arriba { top: -14px; }
+  .marco-pagina .abajo  { bottom: -14px; }
+
+  /* Columnas izquierda y derecha: verticales, alto completo */
+  .marco-pagina .izquierda,
+  .marco-pagina .derecha {
+    top: 0;
+    bottom: 0;
+    height: 100%;
+    flex-direction: column;
+    width: 30px;
+  }
+  .marco-pagina .izquierda { left: -30px; }
+  .marco-pagina .derecha   { right: -30px; }
+
+  .flor-marco {
+    font-size: 1.6rem;
+    opacity: 1;
+  }
+
+  /* En pantallas chicas, marco más chico para no comerse el contenido */
+  @media (max-width: 500px) {
+    .flor-marco { font-size: 1.2rem; }
+  }
+
+  /* ---------- Marco de florcitas en los bordes de la carta ---------- */
+  .marco-carta {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    overflow: hidden;
+  }
+  .marco-carta .fila-borde-carta {
+    position: absolute;
+    display: flex;
+    justify-content: space-around;
+  }
+  .marco-carta .arriba-carta,
+  .marco-carta .abajo-carta {
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+  .marco-carta .arriba-carta { top: -11px; }
+  .marco-carta .abajo-carta  { bottom: -11px; }
+  .marco-carta .izquierda-carta,
+  .marco-carta .derecha-carta {
+    top: 0;
+    bottom: 0;
+    height: 100%;
+    flex-direction: column;
+  }
+  .marco-carta .izquierda-carta { left: -11px; }
+  .marco-carta .derecha-carta   { right: -11px; }
+
+  .flor-marco-chica {
+    font-size: 1.1rem;
+    opacity: 1;
+  }
+
+  /* ---------- Pétalos cayendo (decorativo, de fondo) ---------- */
+  .petalo-cae {
+    position: fixed;
+    top: -30px;
+    font-size: 1.4rem;
+    animation-name: caer;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    pointer-events: none;
+    opacity: 0.8;
+    z-index: 1;
+    will-change: transform;
+  }
+  @keyframes caer {
+    from { transform: translateY(-30px) rotate(0deg); }
+    to   { transform: translateY(110vh) rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ================= MODO SORPRESA: SOBRE CERRADO ================= -->
+  <div class="pantalla-sobre" id="pantallaSobre">
+    <div class="sobre" id="sobre">
+      <div class="sobre-cuerpo"></div>
+      <span class="sobre-sello">💛</span>
+      <div class="sobre-solapa"></div>
+    </div>
+    <p class="texto-sobre">tocá para abrir 🌼</p>
+  </div>
+
+  <!-- Marco decorativo de florcitas en los bordes de toda la página (se llena por JS) -->
+  <div class="marco-pagina" id="marcoPagina">
+    <div class="fila-borde arriba" id="marcoArriba"></div>
+    <div class="fila-borde abajo" id="marcoAbajo"></div>
+    <div class="fila-borde izquierda" id="marcoIzquierda"></div>
+    <div class="fila-borde derecha" id="marcoDerecha"></div>
+  </div>
+
+  <div class="sol"></div>
+
+  <div class="escena" id="escena">
+
+    <div class="titulo" id="inicio">
+      <h1>🌼 Para Sofi 🌼</h1>
+      <p>Aunque estes en Misiones estas flores te tenian que llegar igual.</p>
+    </div>
+
+    <div class="campo" id="campo">
+      <!-- Las flores se generan con JS para poder variar mensajes fácil -->
+      <span class="abeja" id="abeja">🐝</span>
+    </div>
+
+    <p class="pista">tocá las flores ✨</p>
+    <p class="contador-flores" id="contadorFlores">viste 0 de 3 mensajes</p>
+
+    <!-- ================= GALERÍA DE FOTOS ================= -->
+    <!-- Para poner tus fotos: reemplazá cada div "placeholder-foto" por:
+         <img src="TU_IMAGEN.jpg" alt="Nosotros dos">
+         (las imágenes tienen que estar en la misma carpeta que este archivo, o poné una URL) -->
+    <div class="seccion-foto">
+      <div class="galeria">
+        <div class="marco-foto">
+          <img src="foto1.jpeg" alt="Nosotros dos">
+          <p>nosotros dos ✌️🕴️</p>
+        </div>
+        <div class="marco-foto">
+          <img src="foto2.jpeg" alt="sharky">
+          <p>te espera este GENIO!🦈</p>
+        </div>
+        <div class="marco-foto">
+          <img src="foto3.jpeg" alt="maria">
+          <p>💛Us💛</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= CONTADOR DE DÍAS PARA VERNOS ================= -->
+    <div class="seccion-contador">
+      <h3>Faltan para vernos:</h3>
+      <span id="numeroContador">--</span>
+      <span id="textoContador">poné la fecha en el código para activar el contador</span>
+    </div>
+
+    <!-- ================= TIEMPO JUNTOS ================= -->
+    <div class="seccion-datos">
+      <div class="dato-tarjeta">
+        <span class="emoji-dato">🪚</span>
+        <span class="numero-dato" id="numeroConocidos">--</span>
+        <span class="etiqueta-dato" id="textoConocidos">poné la fecha en que se conocieron</span>
+      </div>
+      <div class="dato-tarjeta">
+        <span class="emoji-dato">🍾</span>
+        <span class="numero-dato" id="numeroUltimaVez">--</span>
+        <span class="etiqueta-dato" id="textoUltimaVez">poné la fecha de la última vez que se vieron</span>
+      </div>
+    </div>
+
+    <!-- ================= CARTA FINAL ================= -->
+    <div class="seccion-carta">
+      <div class="marco-carta" id="marcoCarta">
+        <div class="fila-borde-carta arriba-carta" id="marcoCartaArriba"></div>
+        <div class="fila-borde-carta abajo-carta" id="marcoCartaAbajo"></div>
+        <div class="fila-borde-carta izquierda-carta" id="marcoCartaIzquierda"></div>
+        <div class="fila-borde-carta derecha-carta" id="marcoCartaDerecha"></div>
+      </div>
+      <h3>💛 Una cartita para vos</h3>
+      <p id="textoCarta">Acá podés escribir un mensaje más largo, contale
+lo que quieras: por qué elegiste mandarle flores,
+qué es lo que más te gusta de ella, o simplemente
+lo mucho que la extrañás este 21.
+
+Escribilo con calma, no hay apuro.</p>
+      <p class="firma">— con cariño, T</p>
+    </div>
+
+    <button class="boton-volver" id="botonVolver">🌼 Volver a ver las flores</button>
+  </div>
+
+  <!-- Botón para pausar/reproducir música de fondo -->
+  <!-- Para activar la música: poné el archivo mp3 en la misma carpeta y
+       descomentá la etiqueta <audio> de más abajo, reemplazando "tu-cancion.mp3" -->
+  <button class="control-musica" id="botonMusica" title="Música">🔇</button>
+  <audio id="audioFondo" loop src="tu-cancion.mp3"></audio>
+
+  <!-- Overlay con el mensaje -->
+  <div class="overlay" id="overlay">
+    <div class="tarjeta">
+      <button class="cerrar" id="cerrar">✕</button>
+      <span class="emoji-grande" id="emojiTarjeta">🌼</span>
+      <h2 id="tituloTarjeta">¡Para vos!</h2>
+      <p id="mensajeTarjeta">Mensaje acá.</p>
+    </div>
+  </div>
+
+<script>
+  // ---------- Modo sorpresa: lógica del sobre ----------
+  const pantallaSobre = document.getElementById('pantallaSobre');
+  const sobre = document.getElementById('sobre');
+  const escena = document.getElementById('escena');
+
+  pantallaSobre.addEventListener('click', () => {
+    // Evitamos que se pueda volver a tocar mientras se abre
+    if (sobre.classList.contains('abierto')) return;
+
+    sobre.classList.add('abierto');
+    reproducirSonidoTap(); // mismo "plin" que usan las flores
+
+    // Esperamos a que termine la animación de la solapa (0.7s) antes de
+    // ocultar el sobre y mostrar todo el contenido de golpe
+    setTimeout(() => {
+      pantallaSobre.classList.add('oculto');
+      escena.classList.add('visible');
+      ajustarAltoMarco(); // el contenido recién se hace visible acá, así que recalculamos
+    }, 700);
+  });
+
+  // ---------- Ajusta el alto del marco de página al alto real del contenido ----------
+  const marcoPagina = document.getElementById('marcoPagina');
+  function ajustarAltoMarco() {
+    marcoPagina.style.height = document.body.scrollHeight + 'px';
+  }
+  // Lo recalculamos también si cambia el tamaño de ventana (por ejemplo, al rotar el celu)
+  window.addEventListener('resize', ajustarAltoMarco);
+  ajustarAltoMarco();
+
+  // ---------- Mensajes: personalizá esta lista con lo que quieras decirle ----------
+  // Cada flor, al tocarla, muestra uno de estos mensajes (en orden, se repiten si hay más flores que mensajes)
+  const mensajes = [
+    "Ojalá estuvieras acá para recibir estas flores de verdad 🌼",
+    "Cuando vuelvas, te tengo un ramo de verdad esperándote",
+    "Estas son amarillas porque me hacen acordar a vos",
+    "Cuando vuelvas, te tengo un ramo de verdad esperándote",
+    "Espero que este día, aunque lejos, te haga sonreír"
+  ];
+
+  const cantidadFlores = 3; // cambiá este número si querés más o menos flores
+  const campo = document.getElementById('campo');
+
+  // ---------- Genera cada flor dinámicamente ----------
+  for (let i = 0; i < cantidadFlores; i++) {
+    const flor = document.createElement('div');
+    flor.className = 'flor';
+    // delay escalonado para que no crezcan todas juntas
+    flor.style.setProperty('--delay', (i * 0.25) + 's');
+    flor.dataset.mensaje = mensajes[i % mensajes.length];
+
+    flor.innerHTML = `
+      <div class="tallo"></div>
+      <div class="espina a"></div>
+      <div class="espina b"></div>
+      <div class="espina c"></div>
+      <div class="hoja izq"></div>
+      <div class="hoja der"></div>
+      <div class="cabeza-flor">
+        <div class="petalo"></div>
+        <div class="petalo"></div>
+        <div class="petalo"></div>
+        <div class="petalo"></div>
+        <div class="petalo"></div>
+        <div class="petalo"></div>
+        <div class="petalo"></div>
+        <div class="petalo"></div>
+        <div class="centro"></div>
+      </div>
+    `;
+
+    flor.addEventListener('click', (evento) => {
+      mostrarMensaje(flor.dataset.mensaje);
+      mostrarCorazonTap(evento.clientX, evento.clientY);
+      reproducirSonidoTap();
+      vibrarCelular();
+      convertirEnRosa(flor);
+      moverAbejaA(flor);
+      actualizarContadorFlores();
+    });
+    campo.appendChild(flor);
+  }
+
+  // ---------- Vibración corta al tocar (solo funciona en celulares compatibles) ----------
+  function vibrarCelular() {
+    if (navigator.vibrate) {
+      navigator.vibrate(40); // 40ms, un toque sutil, no un zumbido largo
+    }
+  }
+
+  // ---------- Convierte la flor tocada en rosa roja, con una pequeña expansión ----------
+  function convertirEnRosa(flor) {
+    if (flor.classList.contains('tocada')) return; // ya es rosa, no repetimos
+    flor.classList.add('tocada');
+  }
+
+  // ---------- Mueve la abejita para que se pose sobre la flor tocada ----------
+  const abeja = document.getElementById('abeja');
+  function moverAbejaA(flor) {
+    // Sacamos el deambular mientras vuela hacia la flor nueva, para que el
+    // desplazamiento se vea limpio (sin el circulito superpuesto al viaje)
+    abeja.classList.remove('deambulando');
+
+    // Posición de la flor relativa al contenedor .campo (que es el padre posicionado de la abeja)
+    const flor_rect = flor.getBoundingClientRect();
+    const campo_rect = campo.getBoundingClientRect();
+    const x = flor_rect.left - campo_rect.left + flor_rect.width / 2;
+    const y = flor_rect.top - campo_rect.top + 10; // un poco arriba del centro de la flor, como posada
+
+    abeja.style.left = x + 'px';
+    abeja.style.top = y + 'px';
+    abeja.classList.add('visible');
+
+    // Esperamos a que termine el "vuelo" (0.6s, mismo tiempo que la transición
+    // de left/top en el CSS) y recién ahí activamos el deambular en círculo
+    setTimeout(() => {
+      abeja.classList.add('deambulando');
+    }, 600);
+  }
+
+  // ---------- Contador de flores tocadas ----------
+  const contadorFlores = document.getElementById('contadorFlores');
+  function actualizarContadorFlores() {
+    // Contamos cuántas flores tienen la clase .tocada en este momento
+    const tocadas = document.querySelectorAll('.flor.tocada').length;
+    if (tocadas >= cantidadFlores) {
+      contadorFlores.textContent = `¡viste los ${cantidadFlores} mensajes! 💛`;
+    } else {
+      contadorFlores.textContent = `viste ${tocadas} de ${cantidadFlores} mensajes`;
+    }
+  }
+
+  // ---------- Corazón que aparece grande y se achica suave en el punto donde tocaste ----------
+  function mostrarCorazonTap(x, y) {
+    const corazon = document.createElement('div');
+    corazon.className = 'corazon-tap';
+    corazon.textContent = '💛';
+    corazon.style.left = x + 'px';
+    corazon.style.top = y + 'px';
+    document.body.appendChild(corazon);
+
+    // Forzamos un pequeño delay para que el navegador registre el estado inicial
+    // antes de aplicar la clase que dispara la transición (si no, no anima).
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        corazon.classList.add('achicando');
+      });
+    });
+
+    // Lo sacamos del DOM cuando termina la transición, para no acumular elementos
+    corazon.addEventListener('transitionend', () => corazon.remove());
+  }
+
+  // ---------- Sonido corto al tocar una flor (generado, sin archivos externos) ----------
+  let contextoAudio = null; // se crea recién al primer tap (los navegadores lo piden así)
+
+  function reproducirSonidoTap() {
+    // Creamos el AudioContext la primera vez que se necesita
+    if (!contextoAudio) {
+      contextoAudio = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    const oscilador = contextoAudio.createOscillator();
+    const volumen = contextoAudio.createGain();
+
+    oscilador.type = 'sine';
+    oscilador.frequency.setValueAtTime(880, contextoAudio.currentTime); // tono agudo, tipo "plin"
+    oscilador.frequency.exponentialRampToValueAtTime(1200, contextoAudio.currentTime + 0.1);
+
+    // Volumen: sube rápido y baja suave, para que suene como un "ping" corto
+    volumen.gain.setValueAtTime(0, contextoAudio.currentTime);
+    volumen.gain.linearRampToValueAtTime(0.15, contextoAudio.currentTime + 0.02);
+    volumen.gain.exponentialRampToValueAtTime(0.001, contextoAudio.currentTime + 0.35);
+
+    oscilador.connect(volumen);
+    volumen.connect(contextoAudio.destination);
+
+    oscilador.start();
+    oscilador.stop(contextoAudio.currentTime + 0.35);
+  }
+
+  // ---------- Lógica de la tarjeta con el mensaje ----------
+  const overlay = document.getElementById('overlay');
+  const mensajeTarjeta = document.getElementById('mensajeTarjeta');
+  const cerrar = document.getElementById('cerrar');
+
+  function mostrarMensaje(texto) {
+    mensajeTarjeta.textContent = texto;
+    overlay.classList.add('visible');
+  }
+
+  cerrar.addEventListener('click', () => overlay.classList.remove('visible'));
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('visible');
+  });
+
+  // ---------- Contador de días para vernos ----------
+  // Poné acá la fecha en que se van a ver, formato 'AAAA-MM-DD'.
+  // Ejemplo: si se ven el 5 de octubre de 2026, poné '2026-10-05'.
+  const fechaEncuentro = '2026-09-25'; // fecha ya cargada: 21 de septiembre de 2026
+
+  const numeroContador = document.getElementById('numeroContador');
+  const textoContador = document.getElementById('textoContador');
+
+  if (fechaEncuentro) {
+    const hoy = new Date();
+    const destino = new Date(fechaEncuentro + 'T00:00:00');
+    const diffMs = destino - hoy;
+    const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDias > 0) {
+      numeroContador.textContent = diffDias;
+      textoContador.textContent = diffDias === 1 ? 'día' : 'días';
+    } else if (diffDias === 0) {
+      numeroContador.textContent = '🎉';
+      textoContador.textContent = '¡Hoy es el día!';
+    } else {
+      numeroContador.textContent = '💛';
+      textoContador.textContent = '¡ya se vieron!';
+    }
+  }
+  // Si fechaEncuentro sigue en null, se deja el placeholder "--" que ya está en el HTML.
+
+  // ---------- Tiempo desde que se conocieron ----------
+  // Poné la fecha en formato 'AAAA-MM-DD'. Ejemplo: '2024-03-15'.
+   // ---------- Tiempo desde que se conocieron ----------
+  // Poné la fecha en formato 'AAAA-MM-DD'. Ejemplo: '2024-03-15'.
+  const fechaConocidos = '2024-04-01'; // se conocieron el 1/4/2024
+
+  const numeroConocidos = document.getElementById('numeroConocidos');
+  const textoConocidos = document.getElementById('textoConocidos');
+
+  if (fechaConocidos) {
+    const hoy = new Date();
+    const desde = new Date(fechaConocidos + 'T00:00:00');
+    const diasJuntos = Math.floor((hoy - desde) / (1000 * 60 * 60 * 24));
+    numeroConocidos.textContent = diasJuntos;
+    textoConocidos.textContent = diasJuntos === 1 ? 'día que nos conocemos' : 'días desde carpintería';
+  }
+
+  // ---------- Tiempo desde la última vez que se vieron ----------
+  // Esta fecha tiene hora específica: 20/9/2026 a las 2:00 AM.
+  const fechaUltimaVez = '2026-09-20T02:00:00';
+
+  const numeroUltimaVez = document.getElementById('numeroUltimaVez');
+  const textoUltimaVez = document.getElementById('textoUltimaVez');
+
+  if (fechaUltimaVez) {
+    const hoy = new Date();
+    const desde = new Date(fechaUltimaVez);
+    const horasSinVerse = Math.floor((hoy - desde) / (1000 * 60 * 60));
+
+    if (horasSinVerse < 24) {
+      // Menos de un día: mostramos en horas para que sea más preciso
+      numeroUltimaVez.textContent = horasSinVerse;
+      textoUltimaVez.textContent = horasSinVerse === 1 ? 'hora sin vernos' : 'horas desde que nos vimos';
+    } else {
+      // Un día o más: mostramos en días
+      const diasSinVerse = Math.floor(horasSinVerse / 24);
+      numeroUltimaVez.textContent = diasSinVerse;
+      textoUltimaVez.textContent = diasSinVerse === 1 ? 'día sin vernos' : 'días sin vernos';
+    }
+  }
+
+  // ---------- Botón "volver a ver las flores" ----------
+  const botonVolver = document.getElementById('botonVolver');
+  botonVolver.addEventListener('click', () => {
+    document.getElementById('inicio').scrollIntoView({ behavior: 'smooth' });
+  });
+
+  // ---------- Confetti (se dispara al activar la música) ----------
+  function lanzarConfetti() {
+    const coloresConfetti = ['#ffd447', '#f2a900', '#ffffff', '#6b4423', '#fff6d9'];
+    const cantidadConfetti = window.innerWidth < 600 ? 22 : 40; // menos piezas en mobile
+    for (let i = 0; i < cantidadConfetti; i++) {
+      const pieza = document.createElement('div');
+      pieza.className = 'confetti-pieza';
+      pieza.style.left = Math.random() * 100 + 'vw';
+      pieza.style.background = coloresConfetti[Math.floor(Math.random() * coloresConfetti.length)];
+      pieza.style.animationDuration = (2 + Math.random() * 2) + 's';
+      pieza.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      document.body.appendChild(pieza);
+      // Limpiamos la pieza del DOM cuando termina de caer, para no acumular elementos
+      pieza.addEventListener('animationend', () => pieza.remove());
+    }
+  }
+
+  // ---------- Botón de música de fondo ----------
+  const botonMusica = document.getElementById('botonMusica');
+  const audioFondo = document.getElementById('audioFondo'); // será null hasta que descomentes el <audio>
+
+  botonMusica.addEventListener('click', () => {
+    if (!audioFondo) {
+      // Todavía no hay música cargada: igual mostramos el confetti como festejo
+      const activando = botonMusica.textContent === '🔇';
+      botonMusica.textContent = activando ? '🎵' : '🔇';
+      if (activando) lanzarConfetti();
+      return;
+    }
+    if (audioFondo.paused) {
+      audioFondo.play();
+      botonMusica.textContent = '🎵';
+      lanzarConfetti();
+    } else {
+      audioFondo.pause();
+      botonMusica.textContent = '🔇';
+    }
+  });
+
+  // ---------- Pétalos cayendo de fondo (efecto decorativo) ----------
+  // En pantallas chicas (celu) usamos menos pétalos para que la animación sea más fluida
+  const cantidadPetalos = window.innerWidth < 600 ? 10 : 18;
+  const emojisPetalo = ['🌼', '🌸', '✨'];
+  for (let i = 0; i < cantidadPetalos; i++) {
+    const p = document.createElement('div');
+    p.className = 'petalo-cae';
+    p.textContent = emojisPetalo[Math.floor(Math.random() * emojisPetalo.length)];
+    p.style.left = Math.random() * 100 + 'vw';
+    const duracion = 6 + Math.random() * 6; // entre 6 y 12 segundos
+    p.style.animationDuration = duracion + 's';
+    p.style.animationDelay = (Math.random() * 10) + 's';
+    p.style.fontSize = (1 + Math.random() * 1) + 'rem';
+    document.body.appendChild(p);
+  }
+
+  // ---------- Marco decorativo de florcitas: rellena una fila de borde con emojis repetidos ----------
+  // contenedorId: el id de la fila (arriba/abajo/izquierda/derecha)
+  // cantidad: cuántas flores poner en esa fila
+  // clase: la clase css de la florcita (distinta para el marco de página y el de la carta)
+  function generarMarco(contenedorId, cantidad, clase) {
+    const contenedor = document.getElementById(contenedorId);
+    if (!contenedor) return; // por si ese borde no existe en el HTML
+    for (let i = 0; i < cantidad; i++) {
+      const flor = document.createElement('span');
+      flor.className = clase;
+      flor.textContent = '🌼';
+      contenedor.appendChild(flor);
+    }
+  }
+
+  // Marco de toda la página: más flores porque cubre más espacio
+  generarMarco('marcoArriba', 14, 'flor-marco');
+  generarMarco('marcoAbajo', 14, 'flor-marco');
+  generarMarco('marcoIzquierda', 10, 'flor-marco');
+  generarMarco('marcoDerecha', 10, 'flor-marco');
+
+  // Marco de la carta: menos flores, es un espacio más chico
+  generarMarco('marcoCartaArriba', 7, 'flor-marco-chica');
+  generarMarco('marcoCartaAbajo', 7, 'flor-marco-chica');
+  generarMarco('marcoCartaIzquierda', 5, 'flor-marco-chica');
+  generarMarco('marcoCartaDerecha', 5, 'flor-marco-chica');
+</script>
+
+</body>
+</html>
